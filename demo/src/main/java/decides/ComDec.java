@@ -8,5 +8,16 @@ public class ComDec {
     int luckyOrNot(double luck,double hardship){
         return ProDec.decide(luck/100-hardship);
     }
-    
+    int StrengthJudge(int Strength,double luck,double hardship){//数字越大代表结果越好
+        int judge=5;
+        if(ProDec.decide(luck/100-hardship)==1){
+            return 6;
+        }
+        double chance=1-hardship/Strength;
+        while (judge>0) {
+            if(ProDec.decide(chance)==1){return judge;}
+            judge--;
+        }
+        return judge;
+    }
 }
