@@ -1,6 +1,8 @@
 package BuffAndDebuff;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
@@ -54,6 +56,21 @@ public enum BuffType {
         "超级求生欲爆发",
         "攻击力-100%，但是防御力提升80%+20%*level,速度提升60%+40%*level\n嘻嘻，我一定要活下去"),
 
+    LOW_CRITIC_RATE_BOOST(8, new int[]{1},
+        level -> new double[]{0.05 * level},
+        level -> 600.0 * level,
+        "低级暴击率提升",
+        "暴击率提升5%*level(加算)，持续6*level秒"),
+    MID_CRITIC_RATE_BOOST(9, new int[]{1},
+        level -> new double[]{0.075 * level},
+        level -> 500.0 * level,
+        "中级暴击率提升",
+        "暴击率提升7.5%*level(加算)，持续5*level秒"),
+    HIGH_CRITIC_RATE_BOOST(10, new int[]{1},
+        level -> new double[]{0.1 * level},
+        level -> 400.0 * level,
+        "高级暴击率提升",
+        "暴击率提升10%*level(加算)，持续4*level秒"),
         /*未完待续 */
     
         ;
@@ -68,7 +85,7 @@ public enum BuffType {
 
     // 缓存不同等级的 Buff 实例（ConcurrentMap<Level, BuffData>）
     private final ConcurrentMap<Integer, BuffData> levelCache = new ConcurrentHashMap<>();
-
+     private static final Map<Integer, BuffType> ID_MAP = new HashMap<>();
     /**
      * 枚举构造函数
      * @param buffID          Buff 唯一标识
@@ -91,6 +108,14 @@ public enum BuffType {
         this.description = description;
     }
 
+    static {
+        // 类加载时初始化哈希表
+        for (BuffType type : values()) {
+            if (ID_MAP.put(type.buffID, type) != null) {
+                throw new IllegalStateException("Duplicate buff ID: " + type.buffID);
+            }
+        }
+    }
     /**
      * 根据等级获取 Buff 数据（带缓存）
      */
@@ -109,12 +134,11 @@ public enum BuffType {
      * 根据 buffID 查找对应的枚举常量
      */
     public static BuffType fromID(int buffID) {
-        for (BuffType type : values()) {
-            if (type.buffID == buffID) {
-                return type;
-            }
+        BuffType type = ID_MAP.get(buffID);
+        if (type == null) {
+            throw new IllegalArgumentException("Invalid buff ID: " + buffID);
         }
-        throw new IllegalArgumentException("Invalid buff ID: " + buffID);
+        return type;
     }
 
     // Getter 方法
@@ -163,6 +187,7 @@ public enum BuffType {
 class Demo {
     public static void main(String[] args) {
         // 获取 buffID=3, level=5 的实例
+        long startTime = System.nanoTime();
         for (int i = 0; i < 8; i++) {
             BuffType.BuffData buff = BuffType.fromID(i).getBuff(5); 
             System.out.println("Buff名称: " + buff.getType().getName());
@@ -171,6 +196,9 @@ class Demo {
             System.out.println("效果值: " + Arrays.toString(buff.getEffects()));
             System.out.println("持续时间: " + buff.getDuration());
         }
-        
+        long endTime = System.nanoTime();
+        long durationNano = endTime - startTime;
+        double durationMillis = durationNano / 1_000_000.0; // 转毫秒
+        System.out.println("执行耗时：" + durationMillis + " 毫秒");
     }
 }
