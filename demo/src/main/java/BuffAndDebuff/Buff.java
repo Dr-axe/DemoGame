@@ -1,63 +1,51 @@
 package BuffAndDebuff;
-import java.util.*;
-import java.util.Arrays;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import Time.TimeManager;
 public final class Buff {
-    private final int[] targets;
-    private final double[] effects;
-    private final double buffTime;
-
-    private static final ConcurrentMap<Integer, ConcurrentMap<Integer, Buff>> CACHE = new ConcurrentHashMap<>();
-    // 工厂方法，获取Buff实例（带缓存）
-    public static Buff getInstance(int buffID, int level) {
-        return CACHE.computeIfAbsent(buffID, k -> new ConcurrentHashMap<>())
-                   .computeIfAbsent(level, k -> new Buff(buffID, k));
+    private int[] targets;
+    private double[] effects;
+    private double duration;//持续到什么时候
+    private String name,description;
+    private int level;
+    private int buffID;
+    public Buff(int buffID,int level){
+        this.buffID=buffID;
+        constructBuff(level);
     }
-    private Buff(int buffID, int level) {
-        switch (buffID) {
-            case 0: // 低效攻击提升
-                targets = new int[]{0};
-                effects = new double[]{0.1 * level};
-                buffTime = 60 * level;
-                break;
-            case 1: // 一般攻击提升
-                targets = new int[]{0};
-                effects = new double[]{0.15 * level};
-                buffTime = 50 * level;
-                break;
-            case 2: // 高效攻击提升
-                targets = new int[]{0};
-                effects = new double[]{0.225 * level};
-                buffTime = 40 * level;
-                break;
-            case 3: // 破釜沉舟
-                targets = new int[]{0, 3, 5};
-                effects = new double[]{
-                    1.0 + 0.3 * level,
-                    -0.8 + 0.1 * level,
-                    -1.0
-                };
-                buffTime = (level != 0) ? 50.0 / level : 0; // 避免除以零
-                break;
-            default:
-                targets = new int[0];
-                effects = new double[0];
-                buffTime = 0;
-                break;
+    private void constructBuff(int inputLevel){
+            BuffType.BuffData buff = BuffType.fromID(buffID).getBuff(inputLevel);
+            this.name=buff.getType().getName();
+            this.description=buff.getType().getDescription();
+            this.targets=buff.getTargets();
+            this.effects=buff.getEffects();
+            this.duration=buff.getDuration()+TimeManager.time;
+            this.level=inputLevel;
+    }
+    public void increaseDuration(double addDuration){
+        if (this.duration<addDuration/2) {
+            this.duration=addDuration;
+            return ;
+        }
+        else{
+            this.duration+=addDuration/2;
         }
     }
-
-    // 获取方法（返回拷贝）
-    public int[] getTargets() {
-        return Arrays.copyOf(targets, targets.length);
+    public void upadteLevel(int inputLevel){
+        BuffType.BuffData buff = BuffType.fromID(buffID).getBuff(inputLevel);
+        this.effects=buff.getEffects();
+        increaseDuration(buff.getDuration());
+        this.level=inputLevel;
     }
-
-    public double[] getEffects() {
-        return Arrays.copyOf(effects, effects.length);
+    public void mkitMaxLevel(int inputLevel){
+        if (inputLevel>level) {
+            upadteLevel(inputLevel);
+        }
     }
-
-    public double getBuffTime() {
-        return buffTime;
-    }
+    public int getID(){return buffID;}
+    public double getDuration(){return duration;}
+    public int getLevel(){return level;}
+    public int[] getTargets(){return targets;}
+    public double[] getEffects(){return effects;}
+    public String getName(){return name;}
+    public String getDescription(){return description;}
+    public String getText(){return name+"\n"+description;}
 }

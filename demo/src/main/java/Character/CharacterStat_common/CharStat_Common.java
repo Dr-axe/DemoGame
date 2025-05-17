@@ -39,7 +39,10 @@ public class CharStat_Common {
         tradeSkill=Rand.nextInt(level/5,level);
         lordSkill=Rand.nextInt(level/5,level);
     }
-    public double[] getBasicStats() {
+    public double[] getBasicStats(){
+        return basicStats;
+    }
+    public double[] getBasicStats_clone() {
         return basicStats.clone(); // 返回新数组，修改不会影响原始值
     }
 }
