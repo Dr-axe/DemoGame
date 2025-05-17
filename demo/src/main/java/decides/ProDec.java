@@ -6,7 +6,9 @@ public class ProDec {//ProbabilityDecision
         else if(probability > 1.0) {return 1;}
         return ThreadLocalRandom.current().nextDouble() < probability ? 1 : 0;
     }
-
+    private ProDec(){
+        throw new UnsupportedOperationException("工具类禁止实例化喵");
+    }
     // 以下是测试区
     // public static void main(String[] args) {
     //     double probability = 0.3; // 30%概率返回1
