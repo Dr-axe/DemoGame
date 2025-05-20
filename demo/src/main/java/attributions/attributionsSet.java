@@ -36,7 +36,6 @@ public class attributionsSet {
         {0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0},  // 暗 来自亚空间（？）的超自然力量，能够侵蚀实体无视空间限制
         {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 5.0}   // 癫狂 侵蚀思维
     };
-    public attributionsSet(){}
     public static int getSize(){return attributions.length;}
     public static String getAttName(int x){
         if(x < 0 || x >= attributions.length){return "No Such Attribution";}
@@ -87,5 +86,9 @@ public class attributionsSet {
             effectNum+=weight*getEffect_E(integer, target)/2;
         }
         return effectNum;
+    }
+    public static String getAttribution(int n){
+        if(n<0||n>=attributions.length){return "找不到该属性";}
+        return attributions[n];
     }
 }

@@ -79,6 +79,7 @@ public class skillStats{
     private double loadRange(long seed,int skillevel){//avgCost:22
         double sizeRand=Math.random();
         range=(int)Math.sqrt(sizeRand*skillevel*200)+1;
+        if(range>20){range=20;}
         return range*2.0;
     }
     private double loadPre(long seed,int skillevel){
@@ -122,7 +123,7 @@ public class skillStats{
     }
     private double loadDebuff(long seed,int skillevel){
         double usedWeight=0;seed=(seed^-1)<<skillevel|skillevel;
-        if(seed%((skillevel+5)/skillevel)==0){return 0;}//判定成功则不出现debuff
+        if(seed%((skillevel+50)/skillevel)==0){return 0;}//判定成功则不出现debuff
         int[] x=new int[4];
         for(int j=0;j<4;j++){
         int way=abs((int)seed%13);
@@ -177,13 +178,35 @@ public class skillStats{
         System.out.println("◆ 减益效果: " + safeArrayToString(debuffs));
         System.out.println("==================================");
     }
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        // 标题行
+        sb.append("=========== 技能属性详情 ===========\n");
+
+        // 属性行（与 printAllAttributes 顺序和格式一致）
+        sb.append("◆ 属性集合: ").append(safeCollectionToString(attributions)).append("\n");
+        sb.append("◆ 基础属性类型: ").append(getStatTypeName(basedStat)).append("\n");
+        sb.append("◆ 范围半径: ").append(aoeSize).append(" 格\n");
+        sb.append("◆ 有效射程: ").append(range).append(" 格\n");
+        sb.append("◆ 准备状态系数: ").append(String.format("%.2f", prepareState)).append("\n");
+        sb.append("◆ 虚弱状态系数: ").append(String.format("%.2f", weakState)).append("\n");
+        sb.append("◆ 技能强度: ").append(String.format("%.2f", power)).append("\n");
+        sb.append("◆ 增益效果: ").append(safeArrayToString(buffs)).append("\n");
+        sb.append("◆ 减益效果: ").append(safeArrayToString(debuffs)).append("\n");
+
+        // 结尾分隔线
+        sb.append("==================================");
+
+        return sb.toString();
+    }
     private String safeCollectionToString(Set<?> collection) {
         return (collection == null || collection.isEmpty()) 
             ? "无" 
             : collection.toString();
     }
     private String safeArrayToString(int[] array) {
-        if (array == null) return "未初始化";
+        if (array == null) return "无";
         if (array.length == 0) return "无";
         return Arrays.toString(array);
     }

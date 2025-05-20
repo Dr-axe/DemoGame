@@ -7,3 +7,11 @@ String[] statNames={
     "格挡率","格挡突破率","闪避率","闪避破解率","防御无视率","防御无视值",
     "坚韧度","意志力","技巧","感知"
 }
+Block_Miss(6,7,8,9,luck)
+存档组成 ： 时间，非空地方块的坐标列表，玩家控制角色列表，NPC列表，建筑列表
+角色列表组成：角色，角色分组
+角色组成 ： 名称，ID，能力属性，常规属性，战斗属性，技能组，坐标
+坐标列表组成： 特殊地块坐标，特殊地块类型
+建筑列表组成：建筑坐标，建筑类型
+int craftSkill,farmSkill,
+constructSkill,guardSkill,cookSkill,chatSkill,tradeSkill,lordSkill;
