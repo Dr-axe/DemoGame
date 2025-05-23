@@ -8,7 +8,7 @@ import Character.Character;
 public class Location implements Comparable<Location>{
     private int dimention;
     private double x,y;
-    private static String[] dimentionChecker=new String[]{
+    public static String[] dimentionChecker=new String[]{
         "地球","巢都","星界城","月球","火星","辛守村"
     };
     public Location(int dimention,double x,double y){//用于生成查找工具检索坐标

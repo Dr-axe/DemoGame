@@ -58,7 +58,7 @@ public class Character {
         return false;
     }
     public static void main(String[] args) {
-        Character BEEP=new Character("哔噗", 80, new Location(1, 999, -400));
+        Character BEEP=new Character("余润东", 10, new Location(1, 999, -400));
         String testText=BEEP.getInfo();
         System.out.print(testText);
     }
