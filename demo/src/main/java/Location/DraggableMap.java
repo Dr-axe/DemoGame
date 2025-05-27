@@ -1,16 +1,20 @@
 package Location;
 import javax.swing.*;
+
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
+import Character.Character;
 
 public class DraggableMap extends JPanel {
-    private static final int TILE_SIZE = 10; // 每个地块的像素大小
+    private static final int TILE_SIZE = 16; // 每个地块的像素大小
     private static final int CHUNK_SIZE = 64; // 每个区块包含的地块数量
+
+    private static long duration=0;
+    private static int drawTimes=0;
 
     private BlockManager blockManager=new BlockManager();
     private int dimention=0;
@@ -22,6 +26,7 @@ public class DraggableMap extends JPanel {
     // 区块缓存（区块坐标 -> 地块数据）
     private final Map<Point, short[][]> chunkCache = new HashMap<>();
     private ArrayList<WayPoint> wayPoints = new ArrayList<>();
+    private ArrayList<Character> characters=new ArrayList<>();
     
     // 鼠标拖动相关变量
     private int lastDragX;
@@ -66,8 +71,8 @@ public class DraggableMap extends JPanel {
             
             
             // 应用新缩放因子并限制范围
-            scaleFactor = Math.max(0.5, Math.min(3.0, scaleFactor * zoomFactor));
-            
+            scaleFactor = Math.max(0.02, Math.min(10.0, scaleFactor * zoomFactor));
+            // System.out.printf("%.2f\n",scaleFactor);
             // 计算新的偏移量保持鼠标位置不变
             offsetX = (int) (oldWorldX * TILE_SIZE * scaleFactor - mousePoint.x);
             offsetY = (int) (oldWorldY * TILE_SIZE * scaleFactor - mousePoint.y);
@@ -77,11 +82,10 @@ public class DraggableMap extends JPanel {
     }
 
     private void initializeTestData() {
-        // 添加测试路径点
-        wayPoints.add(new WayPoint(0,32, 32));
-        wayPoints.add(new WayPoint(0,-31, -31));
+        // 添加测试数据
+        Character BEEP=new Character("哔噗", 1, new Location(0, 0, -40));
+        // blockManager.addWayPoint(null);
     }
-
     public void changeWayPoints(double minWorldX,double maxWorldX,double minWorldY,double maxWorldY){
         wayPoints=blockManager.getWaypointsBetween(dimention,(int)minWorldX,(int)maxWorldX,(int)minWorldY,(int)maxWorldY);
         if (wayPoints==null) {
@@ -101,9 +105,10 @@ public class DraggableMap extends JPanel {
         double minWorldY = (double) offsetY / (TILE_SIZE * scaleFactor); //▲
         double maxWorldY = (double) (offsetY + height) / (TILE_SIZE * scaleFactor); //▲
 
-        changeWayPoints(minWorldX, maxWorldX, minWorldY, maxWorldY);
-        // initializeTestData();
-
+        // System.out.println("显示区域左上角对应地图坐标"+minWorldX+" "+minWorldY+" ");
+        // System.out.println("显示区域右下角的对应坐标"+maxWorldX+" "+maxWorldY);
+        initializeTestData();
+        changeWayPoints(minWorldY, maxWorldY, minWorldX, maxWorldX);
         // 计算需要渲染的区块范围
         int startX = (int) Math.floor(minWorldX / CHUNK_SIZE);
         int endX = (int) Math.ceil(maxWorldX / CHUNK_SIZE);
@@ -116,19 +121,18 @@ public class DraggableMap extends JPanel {
                 renderChunk(g, chunkX, chunkY);
             }
         }
-
         // 绘制路径点
         drawWayPoints(g);
+        drawCharacters(g);
     }
 
 
     private void renderChunk(Graphics g, int chunkX, int chunkY) {
+        // long startTime = System.nanoTime();
         Point key = new Point(chunkX, chunkY);
-        short[][] chunk = chunkCache.computeIfAbsent(key, k -> blockManager.generateBlock(dimention,chunkX,chunkY));
-
+        short[][] chunk = chunkCache.computeIfAbsent(key, k -> blockManager.getBlockInfo(dimention,chunkY,chunkX));
         int chunkWorldStartX = chunkX * CHUNK_SIZE;
         int chunkWorldStartY = chunkY * CHUNK_SIZE;
-
         for (int i = 0; i < CHUNK_SIZE; i++) {
             for (int j = 0; j < CHUNK_SIZE; j++) {
                 int worldX = chunkWorldStartX + i;
@@ -149,20 +153,53 @@ public class DraggableMap extends JPanel {
 
                 // 绘制地块
                 Color theColor;
-                switch (chunk[i][j]) {
+                switch (chunk[j][i]) {
                     case 0:
-                        theColor=Color.WHITE;
+                        theColor=Color.GREEN;
                         break;
                     case 1:
                         theColor=Color.BLACK;
                         break;
-                    case 2:theColor=Color.ORANGE;break;
-                    case (short)0x8001:theColor = Color.BLACK;break;
-                    default:theColor=Color.BLUE;
+                    case 2:theColor=new Color(255,255,0);break;
+                    case (short)0xe001:theColor = Color.GRAY;break;
+                    case (short)0xc003:theColor =Color.BLUE;break;
+                    case (short)0x0004:theColor =new Color(180,146,28);break;
+                    case (short)0x4005:theColor =new Color(130,102,24);break;
+                    case (short)0xe006:theColor =new Color(100,80,20);break;
+                    case (short)0xe007:theColor =new Color(75,60,15);break;
+                    // case (short)0x8008:theColor =new Color(50,150,70);break;
+                    default:theColor=Color.BLACK;
+                        break;
+                }
+                switch (chunk[j][i]&0xf) {
+                    case 8:
+                        theColor=Color.RED;
+                        break;
+                
+                    default:
                         break;
                 }
                 g.setColor(theColor);
                 g.fillRect(screenX, screenY, tileSize, tileSize); //▲
+            }
+        }
+        // long endTime = System.nanoTime();
+        // duration += endTime - startTime;
+        // drawTimes++;
+        // if ((drawTimes&0x3f)==0) {
+        //     System.out.println("区块绘制累计消耗时间："+duration / 1_000_000.0 + " 毫秒");
+        // }
+    }
+    private void drawCharacters(Graphics g){
+        g.setColor(Color.BLACK);
+        if (!characters.isEmpty()) {
+            for (Character character : characters) {
+                System.out.println("检查点2");
+                Location location=character.getLocation();
+                double x=location.getX(),y=location.getY();
+                int screenX = (int)((y + 0.5) * TILE_SIZE * scaleFactor - offsetX); //▲
+                int screenY = (int)((x + 0.5) * TILE_SIZE * scaleFactor - offsetY); //▲
+                g.fillOval(screenX - 3, screenY - 3, 8, 8);
             }
         }
     }
@@ -171,9 +208,11 @@ public class DraggableMap extends JPanel {
         if (!wayPoints.isEmpty()) {
             for (WayPoint wp : wayPoints) {
                 // 计算屏幕坐标（考虑缩放）
-                int screenX = (int)((wp.x + 0.5) * TILE_SIZE * scaleFactor - offsetX); //▲
-                int screenY = (int)((wp.y + 0.5) * TILE_SIZE * scaleFactor - offsetY); //▲
-                g.fillOval(screenX - 3, screenY - 3, 6, 6);
+                int screenX = (int)((wp.y + 0.5) * TILE_SIZE * scaleFactor - offsetX); //▲
+                int screenY = (int)((wp.x + 0.5) * TILE_SIZE * scaleFactor - offsetY); //▲
+                // System.out.println(wp.x+" "+wp.y);
+                // System.out.println(screenX+" "+screenY);
+                g.fillOval(screenX - 3, screenY - 3, 8, 8);
             }
         }
     }

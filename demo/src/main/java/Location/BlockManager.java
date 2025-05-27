@@ -9,48 +9,67 @@ import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import Character.Character;
+import decides.Rand;
+
 import java.util.Iterator;
 
 import display.DisplayUtil;
 
 public class BlockManager {
-    TreeSet<Block> blockMap;
-    TreeMap<Integer,TreeMap<Integer,TreeSet<WayPoint>>> WayPoints;//三层分别是维度，x，y
+    private static int blockCounter=0;
+    private static long duration=0;
+    private static TreeSet<Block> blockMap=new TreeSet<>();
+    private static TreeMap<Integer,TreeMap<Integer,TreeSet<WayPoint>>> WayPoints=new TreeMap<>();//三层分别是维度，x，y
+    private int seed;
     public BlockManager(){
-        this.blockMap=new TreeSet<>();
-        this.WayPoints=new TreeMap<>();
+        this.seed=Rand.nextInt(0, 0x7ffffffe);
+        System.out.println(seed);
+    }
+    public BlockManager(int seed){
+        this();this.seed=seed;
     }
     public Block findBlock(Block block){
         Block finder=blockMap.floor(block);
         if(block.equals(finder)){return finder;}
         else{return null;}
     }
+    public Block findBlock(int dimention,int x,int y){
+        Block block=new Block(x, y, dimention);
+        Block finder=blockMap.floor(block);
+        if(block.equals(finder)){return finder;}
+        else{return null;}
+    }
+    public short[][] getBlockInfo(int dimention,int x,int y){
+        Block block=new Block(x, y, dimention);
+        Block finder=blockMap.floor(block);
+        if(block.equals(finder)){return finder.getContains();}
+        else{return generateBlock(dimention, x, y);}
+    }
     public void inputBlock(Block block){
         blockMap.add(block);
     }
-    public short[][] generateBlock(int dimention,int chunkX,int chunkY){
+    public short[][] generateBlock(int dimention,int X,int Y){
+        long startTime = System.nanoTime();
         short[][] chunk = new short[64][64];
-        Random rand = new Random(chunkX * 31 + chunkY);
-        
-        // 生成随机障碍物（30%概率）
-        for (int i = 0; i < 64; i++) {
-            for (int j = 0; j < 64; j++) {
-                chunk[i][j] = (short) (rand.nextFloat() < 0.3 ? 0x8001 : 0);
-            }
-        }
-
-        //简单地图障碍物
-        // chunk=ResetBlock.reset1;
-        chunk[32][32]=2;        
-        Block newBlock=new Block(dimention, chunkX, chunkY, chunk);
+        // System.out.println("生成新区块"+X+" "+Y);
+        Block newBlock=new Block(X,Y,dimention,seed);
+        chunk=newBlock.BlockCreate(seed);
         newBlock.buildFlowField(this);
         blockMap.add(newBlock);
+        blockCounter++;
+        long endTime = System.nanoTime();
+        duration += endTime - startTime;
+        if ((blockCounter&0x3f)==0) {
+            System.out.println("创建区块数量："+blockCounter);
+            System.out.println("区块创建代码累计执行耗时: " + duration / 1_000_000.0 + " 毫秒");
+        }
         return chunk;
     }
     public void addWayPoint(WayPoint wayPoint) {
         // 第一层：获取或创建维度对应的x坐标Map（x→TreeSet）
         TreeMap<Integer, TreeSet<WayPoint>> xMap = WayPoints.computeIfAbsent(
-            wayPoint.dimention,  // 修正：维度字段名（假设原dimention是拼写错误）
+            wayPoint.dimention,  
             k -> new TreeMap<>()
         );
         // 第二层：获取或创建x坐标对应的y坐标Set（按y排序）
@@ -65,8 +84,23 @@ public class BlockManager {
         for (WayPoint wayPoint : wg) {
             if (wayPoint!=null||WayPoints.size()<10) {
                 addWayPoint(wayPoint);
+                // System.out.println("new Way Point:"+wayPoint.x+" "+wayPoint.y);
             }
         }
+    }
+    public Character getCharsAt(int dimention,int x,int y){
+        Block seeker=findBlock(dimention,x,y);
+        TreeSet<Character> characters=seeker.getCharacterSet();
+        Character tool=new Character(dimention, x, y);
+        Character finder=characters.ceiling(tool);
+        if (finder.samePosition(tool)) {
+            return finder;
+        }else{
+            return null;
+        }
+    }
+    public void TravelTo(ArrayList<Character> ChoosedCharacters,int x,int y){
+        
     }
     public ArrayList<WayPoint> getWaypointsBetween(int dimention,int Minx,int Maxx,int Miny,int Maxy){
         Maxx--;Maxy--;
@@ -112,10 +146,4 @@ public class BlockManager {
         return wpoints;
     }
 
-    public static void main(String[] args) {
-        BlockManager tst=new BlockManager();
-        tst.inputBlock(new Block(0, 0, 0, false));
-        Block foundedBlock=tst.findBlock(new Block(0, 0, 0));
-        DisplayUtil.display(foundedBlock.getContains(), 0.2, 0.2);
-    }
 }

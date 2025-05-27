@@ -1,0 +1,12 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Launch OpenGL Demo",
+            "request": "launch",
+            "mainClass": "OpenGLDemo", // 替换为主类名
+            "vmArgs": "-Djava.library.path=${workspaceFolder}/target/natives"
+        }
+    ]
+}

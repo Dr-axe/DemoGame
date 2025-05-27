@@ -22,6 +22,8 @@ public class Location implements Comparable<Location>{
             throw new IllegalArgumentException("无效的维度索引: " + dimention + "（有效范围: 0-" + (dimentionChecker.length-1) + "）");
         }
     }
+    public double getX(){return x;}
+    public double getY(){return y;}
     public int getRecognize() {//把维度和X坐标压缩到一个int里面方便进行排序和查询
         return dimention<<24|((int)x+8000000);
     }

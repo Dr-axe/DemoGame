@@ -1,5 +1,6 @@
 {
     "cmake.outputLogEncoding": "UTF-8",
     "java.project.encoding": "setDefault",
-    "java.debug.settings.onBuildFailureProceed": true
+    "java.debug.settings.onBuildFailureProceed": true,
+    "java.configuration.updateBuildConfiguration": "interactive"
 }
